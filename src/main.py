@@ -1,21 +1,27 @@
 import os
 import shutil
+import sys
 
 from markdown_blocks import generate_pages_recursive
 
 def main():
     
+    #default basepath is '/' if no argument is provided
+    basepath = "/"
+    if len(sys.argv) > 1:
+        basepath = sys.argv[1]
+
     # Get the directory of the current script
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(script_dir)
 
-    # Delete "public" directory if it exists, then recreate it
-    public_dir = os.path.join(project_root, "public")
+    # Delete "docs" directory if it exists, then recreate it
+    public_dir = os.path.join(project_root, "docs")
     if os.path.exists(public_dir):
         shutil.rmtree(public_dir)
     os.makedirs(public_dir)
 
-    # Copy static files from "static" to "public"
+    # Copy static files from "static" to "docs"
     source_dir = os.path.join(project_root, "static")
     dest_dir = public_dir
     copy_static_files(source_dir, dest_dir)
@@ -25,7 +31,7 @@ def main():
     template_path = os.path.join(project_root, "template.html")
     
     # Process all markdown files
-    process_markdown_files(content_dir, public_dir, template_path)
+    process_markdown_files(content_dir, public_dir, template_path, basepath)
 
 def copy_static_files(source_dir, dest_dir):
     # First, check if destination exists and remove it
@@ -54,7 +60,7 @@ def _copy_recursive(source_dir, dest_dir):
                 os.mkdir(dest_path)
             _copy_recursive(source_path, dest_path)
 
-def process_markdown_files(content_dir, public_dir, template_path):
+def process_markdown_files(content_dir, public_dir, template_path, basepath):
     for root, dirs, files in os.walk(content_dir):
         # Calculate the relative path from content_dir to the current directory
         rel_path = os.path.relpath(root, content_dir)
@@ -89,7 +95,7 @@ def process_markdown_files(content_dir, public_dir, template_path):
                 os.makedirs(os.path.dirname(html_path), exist_ok=True)
                 
                 # Generate the HTML page
-                generate_pages_recursive(md_path, template_path, html_path)
+                generate_pages_recursive(md_path, template_path, html_path, basepath)
                 print(f"Generated: {html_path} from {md_path}")
 
 if __name__ == "__main__":

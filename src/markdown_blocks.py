@@ -152,7 +152,7 @@ def extract_title(markdown):
             return line[2:].strip()
     raise Exception("No h1 header found in Markdown file.")
     
-def generate_page(from_path, template_path, dest_path):
+def generate_page(from_path, template_path, dest_path, basepath):
     print(f"Generating page from {from_path} to {dest_path} using {template_path}.")
     
     try:
@@ -173,6 +173,9 @@ def generate_page(from_path, template_path, dest_path):
 
     template = template.replace("{{ Title }}", title).replace("{{ Content }}", html)
 
+    template = template.replace('href="/', f'href="{basepath}')
+    template = template.replace('src="/', f'src="{basepath}')
+
     directory = os.path.dirname(dest_path)
     if directory and not os.path.exists(directory):
         os.makedirs(directory)
@@ -180,13 +183,13 @@ def generate_page(from_path, template_path, dest_path):
     with open(dest_path, "w") as file:
         file.write(template)
 
-def generate_pages_recursive(from_path, template_path, dest_path):
+def generate_pages_recursive(from_path, template_path, dest_path, basepath):
     # Base case: if from_path is a file (not a directory)
     if os.path.isfile(from_path):
         if from_path.endswith(".md"):
             # Construct the destination path by replacing .md with .html
             dest_file_path = dest_path[:-3] + ".html" if dest_path.endswith(".md") else dest_path
-            generate_page(from_path, template_path, dest_file_path)
+            generate_page(from_path, template_path, dest_file_path, basepath)
         return
     
     for sub_path in os.listdir(from_path):
@@ -196,11 +199,11 @@ def generate_pages_recursive(from_path, template_path, dest_path):
         if os.path.isdir(full_from_path):
             # Create the directory if it doesn't exist
             os.makedirs(full_dest_path, exist_ok=True)
-            generate_pages_recursive(full_from_path, template_path, full_dest_path)
+            generate_pages_recursive(full_from_path, template_path, full_dest_path, basepath)
         else:
             if sub_path.endswith(".md"):
                 full_dest_path = full_dest_path[:-3] + ".html"
-                generate_page(full_from_path, template_path, full_dest_path)
+                generate_page(full_from_path, template_path, full_dest_path, basepath)
 
 if __name__ == "__main__":
     md = """
